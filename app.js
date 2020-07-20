@@ -33,36 +33,52 @@ function sendMessage(chat, text) {
 
 var jw = new JustWatch({ locale: 'es_ES' })
 app.post(`/${process.env.TELEGRAM_TOKEN}`, async (req, res) => {
-    var providers = await providersDict(await jw.getProviders());
-    if (!req.body.message.text.startsWith('/') && req.body.message.from.is_bot == false) {
-        if (providers !== 500) {
-            var searchResult = await jw.search({ query: req.body.message.text });
-            resp = [];
-            for (result of searchResult['items']) {
-                if (result['title'].toLowerCase() == req.body.message.text.toLowerCase()) {
-                    if (result['offers'] && result['offers'].length > 0) {
-                        result['offers'].forEach(element => {
-                            if (!resp.includes(providers[element['provider_id']])) resp.push(providers[element['provider_id']])
-                        });
-                        sendMessage(req.body.message.chat.id, resp.join(', '))
-                        res.sendStatus(200);
-                    } else {
-                        sendMessage(req.body.message.chat.id, "No he podido encontrar proveedores");
-                        res.sendStatus(200);
+    try {
+        var providers = await providersDict(await jw.getProviders());
+        if (req.body.message.text && !req.body.message.text.startsWith('/')) {
+            // if (req.body.message.from.is_bot && req.body.message.from.is_bot == false) {
+            if (providers !== 500) {
+                var searchResult = await jw.search({ query: req.body.message.text });
+                resp = [];
+                if (searchResult && searchResult['items'] && searchResult['items'].length > 0) {
+                    var found = false;
+                    for (result of searchResult['items']) {
+                        if (result['title']) {
+                            if (result['title'].toLowerCase() == req.body.message.text.toLowerCase()) {
+                                if (result['offers'] && result['offers'].length > 0) {
+                                    result['offers'].forEach(element => {
+                                        if (!resp.includes(providers[element['provider_id']])) resp.push(providers[element['provider_id']])
+                                    });
+                                    sendMessage(req.body.message.chat.id, resp.join(', '));
+                                    found = true;
+                                } else {
+                                    sendMessage(req.body.message.chat.id, "No he podido encontrar proveedores");
+                                };
+                                break
+                            }
+                        } else {
+                            sendMessage(req.body.message.chat.id, "Ha habido un error en el servidor. Por favor, inténtalo más tarde.");
+                        }
                     };
-                    break
-                };
-            };
-            if (resp.length < 1) {
-                sendMessage(req.body.message.chat.id, "No he podido encontrar lo que buscas")
-                res.sendStatus(200);
+                    if (found == false) {
+                        sendMessage(req.body.message.chat.id, "No he podido encontrar nada para lo que me has pedido.");
+                    }
+                } else {
+                    sendMessage(req.body.message.chat.id, "No he encontrado resultados para lo que me has pedido.");
+                }
+            } else {
+                sendMessage(req.body.message.chat.id, "Ha habido un error en el servidor. Por favor, inténtalo más tarde.");
             }
-        } else {
-            sendMessage(req.body.message.chat.id, "ERROR");
-            res.sendStatus(200)
+            // }
+        } else if (req.body.message.text && req.body.message.text.includes("/start")) {
+            sendMessage(req.body.message.chat.id, "Dime un título y te diré en qué plataforma de streaming puedes encontrarlo.");
         }
+    } catch (e) {
+        console.log(e);
+        sendMessage(req.body.message.chat.id, "Ha habido un error en el servidor. Por favor, inténtalo más tarde.");
+    } finally {
+        res.end();
     }
-    res.end();
 });
 
 module.exports = app;
