@@ -74,7 +74,8 @@ app.post(`/${process.env.TELEGRAM_TOKEN}`, async (req, res) => {
             sendMessage(req.body.message.chat.id, "Dime un título y te diré en qué plataforma de streaming puedes encontrarlo.");
         }
     } catch (e) {
-        console.log(e);
+        var message = `ERROR:\n${e}\n\nREQUEST:\n${req.body}`;
+        https.get(`https://api.telegram.org/bot${process.env.NOTIFIER_TOKEN}/sendMessage?chat_id=${process.env.NOTIFIER_ID}&parse_mode=Markdown&text=${message}`);
         sendMessage(req.body.message.chat.id, "Ha habido un error en el servidor. Por favor, inténtalo más tarde.");
     } finally {
         res.end();
