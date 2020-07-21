@@ -13,6 +13,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+message = {
+    error: "Ha habido un error en el servidor. Por favor, inténtalo más tarde.",
+    no_result: "No he podido encontrar nada para lo que me has pedido.",
+    
+}
+
 function providersDict(object) {
     return new Promise((res, rej) => {
         try {
@@ -36,7 +42,6 @@ app.post(`/${process.env.TELEGRAM_TOKEN}`, async (req, res) => {
     try {
         var providers = await providersDict(await jw.getProviders());
         if (req.body.message.text && !req.body.message.text.startsWith('/')) {
-            // if (req.body.message.from.is_bot && req.body.message.from.is_bot == false) {
             if (providers !== 500) {
                 var searchResult = await jw.search({ query: req.body.message.text });
                 resp = [];
@@ -56,31 +61,22 @@ app.post(`/${process.env.TELEGRAM_TOKEN}`, async (req, res) => {
                                 };
                                 break
                             }
-                        } else {
-                            sendMessage(req.body.message.chat.id, "Ha habido un error en el servidor. Por favor, inténtalo más tarde.");
-                        }
+                        } else sendMessage(req.body.message.chat.id, message.error);
                     };
-                    if (found == false) {
-                        sendMessage(req.body.message.chat.id, "No he podido encontrar nada para lo que me has pedido.");
-                    }
-                } else {
-                    sendMessage(req.body.message.chat.id, "No he encontrado resultados para lo que me has pedido.");
-                }
-            } else {
-                sendMessage(req.body.message.chat.id, "Ha habido un error en el servidor. Por favor, inténtalo más tarde.");
-            }
-            // }
+                    if (found == false) sendMessage(req.body.message.chat.id, message.no_result);
+                } else sendMessage(req.body.message.chat.id, message.no_result);
+            } else sendMessage(req.body.message.chat.id, message.error);
         } else if (req.body.message.text && req.body.message.text.includes("/start")) {
             sendMessage(req.body.message.chat.id, "Dime un título y te diré en qué plataforma de streaming puedes encontrarlo.");
         }
     } catch (e) {
-        var message = `ERROR:
+        var notification = `ERROR:
         ${e}
         
         REQUEST:
         ${req.body}`;
-        https.get(`https://api.telegram.org/bot${process.env.NOTIFIER_TOKEN}/sendMessage?chat_id=${process.env.NOTIFIER_ID}&parse_mode=Markdown&text=${message}`);
-        sendMessage(req.body.message.chat.id, "Ha habido un error en el servidor. Por favor, inténtalo más tarde.");
+        https.get(`https://api.telegram.org/bot${process.env.NOTIFIER_TOKEN}/sendMessage?chat_id=${process.env.NOTIFIER_ID}&parse_mode=Markdown&text=${notification}`);
+        sendMessage(req.body.message.chat.id, message.error);
     } finally {
         res.end();
     }
