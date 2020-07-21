@@ -1,0 +1,26 @@
+Changelog
+=========
+
+
+1.0.0 (2020-07-21)
+------------------
+
+New
+~~~
+- Added enpoint for telegram bot. [Mario Casado]
+- Added getproviders endpoint. [Mario Casado]
+
+Changes
+~~~~~~~
+- Syntax style fix. [Mario Casado]
+- Added bot notification alert at error. [Mario Casado]
+- Routing reduced to only telegram hook. [Mario Casado]
+- Added checking name with api result and handling empty result. [Mario
+  Casado]
+
+Fix
+~~~
+- Syntax fix for makdown format. [Mario Casado]
+- Added error handling try/catch general block. [Mario Casado]
+
+
